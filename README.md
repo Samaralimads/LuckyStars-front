@@ -48,33 +48,6 @@ LuckyStars/
 └── UI/                      shared components, modifiers, assets, custom fonts
 ```
 
-## Requirements
-
-- Xcode matching the SDK configured in the project (current `IPHONEOS_DEPLOYMENT_TARGET`: 26.2)
-- The **LuckyStars-back** backend must be running (locally or reachable) for the app to work
-
-## Configuration
-
-The API base URL is hardcoded in `LuckyStars/Services/APIClient.swift`:
-
-```swift
-private let baseURL = "http://127.0.0.1:8080"
-```
-
-- Simulator + a local backend (`swift run` in LuckyStars-back): no change needed.
-- Physical device: replace `127.0.0.1` with the local network IP of the machine running the backend
-  (same Wi-Fi network).
-
-### Permissions (Info.plist)
-
-- `NSCalendarsFullAccessUsageDescription` — needed to add a date to the calendar
-- `NSPhotoLibraryUsageDescription` — needed to pick a profile photo
-
-## Running the project
-
-1. Start the backend (`LuckyStars-back`: `swift run`)
-2. Open `LuckyStars.xcodeproj` in Xcode
-3. Run on a simulator (or a device, after adjusting `baseURL`)
 
 ## Main features
 
