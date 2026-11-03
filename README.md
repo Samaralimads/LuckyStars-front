@@ -1,10 +1,10 @@
-# Together
+# Lucky Stars
 
 An iOS app that helps couples find and plan activities to do together: browsing and filtering
 activities, proposing dates (accept / decline / reschedule), pairing with a partner via an invitation
 code, and a shared profile with couple statistics.
 
-This repo contains only the iOS client. The backend API lives in the **Together-back** repo
+This repo contains only the iOS client. The backend API lives in the **LuckyStars-back** repo
 (Vapor + MySQL).
 
 ## Tech stack
@@ -33,7 +33,7 @@ know the URL or JSON shape of a request.
 ## Project structure
 
 ```
-Together/
+LuckyStars/
 ├── App/                     entry point, AppState (global session/navigation)
 ├── Features/
 │   ├── Auth/                sign up, sign in, forgot password
@@ -51,17 +51,17 @@ Together/
 ## Requirements
 
 - Xcode matching the SDK configured in the project (current `IPHONEOS_DEPLOYMENT_TARGET`: 26.2)
-- The **Together-back** backend must be running (locally or reachable) for the app to work
+- The **LuckyStars-back** backend must be running (locally or reachable) for the app to work
 
 ## Configuration
 
-The API base URL is hardcoded in `Together/Services/APIClient.swift`:
+The API base URL is hardcoded in `LuckyStars/Services/APIClient.swift`:
 
 ```swift
 private let baseURL = "http://127.0.0.1:8080"
 ```
 
-- Simulator + a local backend (`swift run` in Together-back): no change needed.
+- Simulator + a local backend (`swift run` in LuckyStars-back): no change needed.
 - Physical device: replace `127.0.0.1` with the local network IP of the machine running the backend
   (same Wi-Fi network).
 
@@ -72,8 +72,8 @@ private let baseURL = "http://127.0.0.1:8080"
 
 ## Running the project
 
-1. Start the backend (`Together-back`: `swift run`)
-2. Open `Together.xcodeproj` in Xcode
+1. Start the backend (`LuckyStars-back`: `swift run`)
+2. Open `LuckyStars.xcodeproj` in Xcode
 3. Run on a simulator (or a device, after adjusting `baseURL`)
 
 ## Main features
