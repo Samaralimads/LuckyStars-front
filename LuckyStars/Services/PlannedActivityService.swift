@@ -30,12 +30,9 @@ struct PlannedActivityService {
 
     // MARK: - Propose
     static func propose(activityId: UUID, date: Date) async throws -> PlannedActivity {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        formatter.timeZone = TimeZone(identifier: "UTC")
         let body = ProposeRequest(
             activityId: activityId,
-            proposedDate: formatter.string(from: date),
+            proposedDate: APIDate.dateTimeString(from: date),
             reminderEnabled: false,
             reminderDaysBefore: nil
         )
@@ -60,11 +57,8 @@ struct PlannedActivityService {
 
     // MARK: - Reschedule
     static func reschedule(id: UUID, newDate: Date, note: String? = nil) async throws -> PlannedActivity {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        formatter.timeZone = TimeZone(identifier: "UTC")
         let body = RescheduleRequest(
-            proposedDate: formatter.string(from: newDate),
+            proposedDate: APIDate.dateTimeString(from: newDate),
             note: note,
             reminderEnabled: false,
             reminderDaysBefore: nil

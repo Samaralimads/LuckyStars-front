@@ -29,6 +29,8 @@ struct InputField: View {
 
     var isValid: Bool = true
     var passwordRequirements: PasswordRequirements? = nil
+    /// Latest date the date field allows.
+    var maximumDate: Date = .now
 
     @State private var showPassword = false
     @State private var showPasswordRequirements = false
@@ -57,14 +59,22 @@ struct InputField: View {
         placeholder: String,
         type: InputFieldType = .date,
         date: Binding<Date?>,
+        maximumDate: Date = .now,
         isValid: Bool = true
     ) {
         self.placeholder = placeholder
         self.type = type
         self._text = .constant("")
         self._date = date
+        self.maximumDate = maximumDate
         self.isValid = isValid
         self.passwordRequirements = nil
+    }
+
+    /// Where the picker opens while nothing is chosen yet: a few decades back, never past the maximum.
+    private var defaultPickerDate: Date {
+        let decadesBack = Calendar.current.date(byAdding: .year, value: -25, to: .now) ?? maximumDate
+        return min(decadesBack, maximumDate)
     }
 
     private var promptText: Text {
@@ -79,19 +89,32 @@ struct InputField: View {
                 switch type {
 
                 case .date:
-                    DatePicker(
-                        placeholder,
-                        selection: Binding(
-                            get: { date ?? Date.now },
-                            set: { date = $0 }
-                        ),
-                        in: ...Date.now,
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.compact)
-                    .tint(Color.luckyBlue)
-                    .font(.luckyBodyStrong)
-                    .fieldStyle(isFocused: false)
+                    ZStack {
+                        if date == nil {
+                            HStack {
+                                Text(placeholder).foregroundStyle(Color.placeholderGrey)
+                                Spacer()
+                            }
+                            .fieldStyle(isFocused: false)
+                            .accessibilityHidden(true)
+                        }
+
+                        DatePicker(
+                            selection: Binding(
+                                get: { date ?? defaultPickerDate },
+                                set: { date = $0 }
+                            ),
+                            in: ...maximumDate,
+                            displayedComponents: .date
+                        ) {
+                            // Same grey as the other fields' placeholders.
+                            Text(placeholder).foregroundStyle(Color.placeholderGrey)
+                        }
+                        .datePickerStyle(.compact)
+                        .tint(Color.luckyBlue)
+                        .fieldStyle(isFocused: false)
+                        .opacity(date == nil ? 0.015 : 1)
+                    }
 
                 case .password:
                     Group {

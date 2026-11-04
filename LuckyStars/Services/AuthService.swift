@@ -47,7 +47,7 @@ struct AuthService {
     static func register(firstName: String, birthDate: String, email: String, password: String) async throws -> AuthResponse {
         let body = RegisterRequest(firstName: firstName, birthDate: birthDate, email: email, password: password)
         let response: AuthResponse = try await APIClient.shared.request("/users/register", method: "POST", body: body, requiresAuth: false)
-        JWTService.save(token: response.token)
+        guard JWTService.save(token: response.token) else { throw SessionError.couldNotSaveToken }
         return response
     }
 
@@ -55,7 +55,7 @@ struct AuthService {
     static func login(email: String, password: String) async throws -> AuthResponse {
         let body = LoginRequest(email: email, password: password)
         let response: AuthResponse = try await APIClient.shared.request("/users/login", method: "POST", body: body, requiresAuth: false)
-        JWTService.save(token: response.token)
+        guard JWTService.save(token: response.token) else { throw SessionError.couldNotSaveToken }
         return response
     }
 

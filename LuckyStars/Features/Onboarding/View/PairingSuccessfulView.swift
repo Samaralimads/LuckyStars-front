@@ -1,5 +1,5 @@
 //
-//  PairingSucessfulView.swift
+//  PairingSuccessfulView.swift
 //  LuckyStars
 //
 //  Created by Samara Lima da Silva on 10/02/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct PairingSucessfulView: View {
+struct PairingSuccessfulView: View {
     @Environment(AppState.self) private var appState
 
     var body: some View {
@@ -56,6 +56,6 @@ struct PairingSucessfulView: View {
 }
 
 #Preview {
-    PairingSucessfulView()
+    PairingSuccessfulView()
         .environment(AppState())
 }

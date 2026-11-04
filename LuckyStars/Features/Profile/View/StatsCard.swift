@@ -29,12 +29,14 @@ struct StatsCard: View {
                 Spacer()
 
                 Menu {
-                    Button("This year") { }
-                    Button("This month") { }
-                    Button("All time") { }
+                    Picker("Range", selection: $viewModel.range) {
+                        ForEach(StatsRange.allCases) { range in
+                            Text(range.rawValue).tag(range)
+                        }
+                    }
                 } label: {
                     HStack(spacing: 4) {
-                        Text("This year")
+                        Text(viewModel.range.rawValue)
                             .font(.luckySubheadlineStrong)
 
                         Image(systemName: "chevron.down")
@@ -51,6 +53,21 @@ struct StatsCard: View {
                 ProgressView()
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 30)
+            } else if let errorMessage = viewModel.errorMessage {
+                VStack(spacing: Spacing.m) {
+                    Text(errorMessage)
+                        .font(.luckySubheadline)
+                        .foregroundStyle(Color.destructiveRed)
+
+                    Button("Try again") {
+                        Task { await viewModel.load() }
+                    }
+                    .font(.luckySubheadlineStrong)
+                    .foregroundStyle(Color.luckyBlue)
+                    .underline()
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 30)
             } else {
                 DatesCompletedRow(totalDates: viewModel.totalCompleted)
 

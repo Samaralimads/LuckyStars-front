@@ -32,7 +32,7 @@ struct FiltersView: View {
     var body: some View {
         ZStack {
             Color.cardFill
-                .edgesIgnoringSafeArea(.all)
+                .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 header

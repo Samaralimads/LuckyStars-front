@@ -17,6 +17,10 @@ struct CalendarEventStore {
         set { UserDefaults.standard.set(newValue, forKey: key) }
     }
 
+    static func clear() {
+        UserDefaults.standard.removeObject(forKey: key)
+    }
+
     static func eventIdentifier(for plannedActivityId: UUID) -> String? {
         mapping[plannedActivityId.uuidString]
     }

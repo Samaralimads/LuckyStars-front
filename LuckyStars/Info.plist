@@ -4,10 +4,6 @@
 <dict>
 	<key>UIAppFonts</key>
 	<array>
-		<string>IvyJournal-LightItalic.otf</string>
-		<string>IvyJournal-Bold .otf</string>
-		<string>IvyJournal-Thin.otf</string>
-		<string>IvyJournal-SemiBoldItalic.otf</string>
 		<string>Gaegu-Regular.ttf</string>
 		<string>Gaegu-Bold.ttf</string>
 		<string>Nunito-Regular.ttf</string>

@@ -21,15 +21,8 @@ struct PlannedActivity: Codable, Identifiable {
     let note: String?
     let createdAt: String?
 
-    private static let apiDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        return formatter
-    }()
-
     var parsedDate: Date? {
-        Self.apiDateFormatter.date(from: proposedDate)
+        APIDate.dateTime(from: proposedDate)
     }
 
     var isPending: Bool { bookingStatus == "pending" }

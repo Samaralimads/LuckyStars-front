@@ -8,8 +8,12 @@
 import SwiftUI
 
 struct ShareCodePairingView: View {
+    /// Onboarding continues to the anniversary step; from Profile there is nothing to continue to.
+    var showsNext = true
+
     @State private var code = ""
     @State private var isLoading = true
+    @State private var loadFailed = false
     @State private var navigateToAnniversary = false
 
     var body: some View {
@@ -19,9 +23,19 @@ struct ShareCodePairingView: View {
                 if isLoading {
                     ProgressView()
                         .padding(.vertical, Spacing.xl)
+                } else if loadFailed {
+                    Text("We couldn't load your code.")
+                        .font(.luckySubheadline)
+                        .foregroundStyle(Color.destructiveRed)
+                        .padding(.vertical, Spacing.l)
+
+                    Button("Try again") {
+                        Task { await loadCode() }
+                    }
+                    .buttonStyle(.luckyPrimary)
                 } else {
                     HStack(spacing: Spacing.s) {
-                        ForEach(Array(code), id: \.self) { character in
+                        ForEach(Array(code.enumerated()), id: \.offset) { _, character in
                             CodeDigitBox(digit: String(character), isActive: false)
                         }
                     }
@@ -39,28 +53,37 @@ struct ShareCodePairingView: View {
                     }
                     .buttonStyle(.luckyPrimary)
 
-                    Button("Next") {
-                        navigateToAnniversary = true
+                    if showsNext {
+                        Button("Next") {
+                            navigateToAnniversary = true
+                        }
+                        .font(.luckySubheadlineStrong)
+                        .foregroundStyle(Color.luckyBlue)
+                        .underline()
                     }
-                    .font(.luckySubheadlineStrong)
-                    .foregroundStyle(Color.luckyBlue)
-                    .underline()
                 }
             }
         }
         .luckyBackButton()
-        .task {
-            do {
-                let invitation = try await CoupleService.getMyInvitationCode()
-                code = invitation.code
-            } catch {
-                code = "------"
-            }
-            isLoading = false
-        }
+        .task { await loadCode() }
         .navigationDestination(isPresented: $navigateToAnniversary) {
             AnniversaryView()
         }
+    }
+}
+
+private extension ShareCodePairingView {
+    func loadCode() async {
+        isLoading = true
+        loadFailed = false
+        do {
+            code = try await CoupleService.getMyInvitationCode().code
+        } catch is CancellationError {
+        } catch let error as URLError where error.code == .cancelled {
+        } catch {
+            loadFailed = true
+        }
+        isLoading = false
     }
 }
 

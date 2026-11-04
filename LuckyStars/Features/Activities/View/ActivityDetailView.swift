@@ -16,6 +16,7 @@ struct ActivityDetailView: View {
     @State private var isLoadingFavorite = false
     @State private var isProposing = false
     @State private var proposalSuccess = false
+    @State private var errorMessage: String? = nil
 
     var body: some View {
         Background {
@@ -61,7 +62,7 @@ struct ActivityDetailView: View {
                                 .font(.luckyLabel)
                                 .foregroundStyle(Color.charcoal)
                             Spacer()
-                            DatePicker("", selection: $selectedDate, displayedComponents: .date)
+                            DatePicker("", selection: $selectedDate, in: Date.now..., displayedComponents: .date)
                                 .labelsHidden()
                                 .tint(Color.luckyBlue)
                         }
@@ -88,9 +89,16 @@ struct ActivityDetailView: View {
                             .foregroundStyle(Color.luckyBlue)
                         }
 
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .font(.luckySubheadline)
+                                .foregroundStyle(Color.destructiveRed)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
                         Button(isProposing ? "Sending..." : "Plan this activity", action: proposeActivity)
                             .buttonStyle(.luckyPrimary)
-                            .disabled(isProposing)
+                            .disabled(isProposing || proposalSuccess)
 
                         Button(action: toggleFavorite) {
                             HStack(spacing: Spacing.s) {
@@ -115,7 +123,9 @@ struct ActivityDetailView: View {
                 let favorites = try await ActivityService.fetchFavorites()
                 isFavorite = favorites.contains(where: { $0.id == activity.id })
             } catch {
+                guard !error.isCancellation else { return }
                 print("Fetch favorites error: \(error)")
+                errorMessage = "Couldn't check your favorites."
             }
         }
     }
@@ -123,14 +133,23 @@ struct ActivityDetailView: View {
     // MARK: - Actions
     private func proposeActivity() {
         Task {
-            isProposing = true
+            errorMessage = nil
             let finalDate = combinedDate(date: selectedDate, time: selectedTime)
+            guard finalDate > .now else {
+                errorMessage = "Pick a date and time in the future."
+                return
+            }
 
+            isProposing = true
             do {
                 _ = try await PlannedActivityService.propose(activityId: activity.id, date: finalDate)
                 proposalSuccess = true
+            } catch let error as APIError {
+                print("Propose error: \(error)")
+                errorMessage = error.errorDescription ?? "Couldn't send the proposal. Please try again."
             } catch {
                 print("Propose error: \(error)")
+                errorMessage = "Couldn't send the proposal. Please try again."
             }
             isProposing = false
         }
@@ -140,6 +159,7 @@ struct ActivityDetailView: View {
         guard !isLoadingFavorite else { return }
         Task {
             isLoadingFavorite = true
+            errorMessage = nil
             do {
                 if isFavorite {
                     try await ActivityService.removeFavorite(activityId: activity.id)
@@ -149,6 +169,7 @@ struct ActivityDetailView: View {
                 withAnimation { isFavorite.toggle() }
             } catch {
                 print("Favorite toggle error: \(error)")
+                errorMessage = "Couldn't update your favorites. Please try again."
             }
             isLoadingFavorite = false
         }

@@ -12,10 +12,20 @@ struct InfoTags: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            InfoTag(icon: "clock.fill", text: "\(activity.duration / 60)h", color: .avatarPink)
+            InfoTag(icon: "clock.fill", text: Self.durationText(minutes: activity.duration), color: .avatarPink)
             InfoTag(icon: "location.fill", text: activity.isIndoor ? "Indoors" : "Outdoors", color: .luckyBlue)
             InfoTag(icon: "wallet.bifold.fill", text: activity.budget, color: .luckyBlueLight)
         }
+    }
+}
+
+extension InfoTags {
+    /// 90 -> "1h 30m", 120 -> "2h", 30 -> "30 min".
+    static func durationText(minutes: Int) -> String {
+        let hours = minutes / 60
+        let rest = minutes % 60
+        if hours == 0 { return "\(rest) min" }
+        return rest == 0 ? "\(hours)h" : "\(hours)h \(rest)m"
     }
 }
 

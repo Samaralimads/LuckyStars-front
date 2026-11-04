@@ -27,13 +27,7 @@ struct SignInView: View {
                     InputField(
                         placeholder: "Password",
                         type: .password,
-                        text: $viewModel.password,
-                        isValid: viewModel.isPasswordValid,
-                        passwordRequirements: PasswordRequirements(
-                            hasUppercase: viewModel.hasUppercase,
-                            hasNumber: viewModel.hasNumber,
-                            hasMinLength: viewModel.hasMinLength
-                        )
+                        text: $viewModel.password
                     )
 
                     HStack {

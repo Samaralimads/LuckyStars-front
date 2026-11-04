@@ -12,6 +12,7 @@ enum MyDatesTab {
 }
 
 struct MyDatesView: View {
+    @Environment(\.switchTab) private var switchTab
     @State private var selectedTab: MyDatesTab = .favorites
     @State private var favorites: [Activity] = []
     @State private var upcoming: [PlannedActivity] = []
@@ -174,9 +175,7 @@ struct MyDatesView: View {
                 .font(.luckySubheadline)
                 .foregroundStyle(Color.inkSecondary)
                 .multilineTextAlignment(.center)
-            NavigationLink(destination: ActivityView()) {
-                Text("Discover activities")
-            }
+            Button("Discover activities") { switchTab(.discover) }
             .buttonStyle(.luckyPrimary)
             .padding(.top, 8)
         }

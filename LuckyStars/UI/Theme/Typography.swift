@@ -48,7 +48,6 @@ extension Font {
     static let luckySubheadlineStrong = Font.custom("Nunito-Bold", size: 14, relativeTo: .subheadline)
 
     /// Small uppercase labels and tags.
-    static let luckyCaption = Font.custom("Nunito-SemiBold", size: 12, relativeTo: .caption)
 
     static let luckyCaptionStrong = Font.custom("Nunito-Bold", size: 12, relativeTo: .caption)
 }

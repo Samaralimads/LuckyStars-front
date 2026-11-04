@@ -33,40 +33,45 @@ class ActivityViewModel {
             .map(\.element)
     }
 
+    // Bumped by every refresh so an older, slower response never overwrites a newer one.
+    private var latestRequest = 0
+
     // MARK: - Load everything on appear
     func load() async {
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            async let fetchedCategories = ActivityService.fetchCategories()
-            async let fetchedActivities = ActivityService.fetchActivities()
-            categories = Self.displayOrder(try await fetchedCategories)
-            activities = try await fetchedActivities
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isLoading = false
+        await refresh()
     }
 
     // MARK: - Apply filters and search
     func applyFilters() async {
+        await refresh()
+    }
+
+    /// Fetches the activities for the current category, search text and filters
+    /// (plus the categories the first time), so reloading never drops the user's filters.
+    private func refresh() async {
+        latestRequest += 1
+        let request = latestRequest
         isLoading = true
         errorMessage = nil
 
         do {
-            activities = try await ActivityService.fetchActivities(
+            if categories.isEmpty {
+                categories = Self.displayOrder(try await ActivityService.fetchCategories())
+            }
+            let fetched = try await ActivityService.fetchActivities(
                 category: selectedCategoryName,
                 search: searchText.isEmpty ? nil : searchText,
                 budget: filterState.priceRange,
                 duration: filterState.duration,
                 location: filterState.location
             )
+            guard request == latestRequest else { return }
+            activities = fetched
         } catch {
+            guard request == latestRequest, !error.isCancellation else { return }
             errorMessage = error.localizedDescription
         }
 
-        isLoading = false
+        if request == latestRequest { isLoading = false }
     }
 }

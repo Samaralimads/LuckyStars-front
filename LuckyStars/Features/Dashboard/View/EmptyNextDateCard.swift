@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct EmptyNextDateCard: View {
+    @Environment(\.switchTab) private var switchTab
+
     var body: some View {
-        // TODO: Add a cute illustration or animation to this empty state.
         VStack(alignment: .leading, spacing: Spacing.m) {
             Text("A little time for two.")
                 .font(.luckyTitle)
@@ -21,9 +22,7 @@ struct EmptyNextDateCard: View {
                 .foregroundStyle(Color.charcoal)
                 .multilineTextAlignment(.leading)
 
-            NavigationLink(destination: ActivityView()) {
-                Text("Find an activity →")
-            }
+            Button("Find an activity →") { switchTab(.discover) }
             .buttonStyle(.luckyPrimaryCompact)
         }
         .background(alignment: .topTrailing) {

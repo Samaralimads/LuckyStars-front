@@ -10,7 +10,7 @@ import SwiftUI
 struct DashboardView: View {
     @State private var viewModel = DashboardViewModel()
     @Environment(\.switchTab) private var switchTab
-    @State private var showInviteBannerDismissed = false
+    @AppStorage("inviteBannerDismissed") private var showInviteBannerDismissed = false
     @State private var proposalToReschedule: PlannedActivity? = nil
     @State private var proposalToDecline: PlannedActivity? = nil
     @State private var navigateToDetail = false
@@ -221,7 +221,7 @@ private extension DashboardView {
                             .foregroundStyle(Color.charcoal)
                     }
 
-                    InviteBannerCard(code: "C89FB7", onDismiss: {})
+                    InviteBannerCard(code: "482916", onDismiss: {})
 
                     NextDateCard(planned: nextDate, onDetails: {}, onAddToCalendar: {})
 

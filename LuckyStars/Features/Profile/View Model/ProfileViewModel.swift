@@ -29,12 +29,14 @@ class ProfileViewModel {
         do {
             user = try await ProfileService.fetchMe()
         } catch {
+            guard !error.isCancellation else { isLoading = false; return }
             errorMessage = error.localizedDescription
         }
 
         do {
             couple = try await ProfileService.fetchCouple()
         } catch {
+            guard !error.isCancellation else { isLoading = false; return }
             couple = nil
         }
 
@@ -42,6 +44,7 @@ class ProfileViewModel {
             let dates = try await ProfileService.fetchImportantDates()
             importantDates = dates.map { importantDate(from: $0) }
         } catch {
+            guard !error.isCancellation else { isLoading = false; return }
             importantDates = []
         }
 
@@ -84,11 +87,10 @@ class ProfileViewModel {
 
     // MARK: - Add important date
     func addImportantDate(label: String, date: Date, repeatsYearly: Bool, reminderDaysBefore: Int?) async {
-        let formatter = dateFormatter()
         do {
             let response = try await ProfileService.createImportantDate(
                 label: label,
-                date: formatter.string(from: date),
+                date: APIDate.dayString(from: date),
                 repeatYearly: repeatsYearly,
                 reminderDaysBefore: reminderDaysBefore
             )
@@ -100,12 +102,11 @@ class ProfileViewModel {
 
     // MARK: - Update important date
     func updateImportantDate(_ importantDate: ImportantDate) async {
-        let formatter = dateFormatter()
         do {
             let response = try await ProfileService.updateImportantDate(
                 id: importantDate.id,
                 label: importantDate.label,
-                date: formatter.string(from: importantDate.date),
+                date: APIDate.dayString(from: importantDate.date),
                 repeatYearly: importantDate.repeatsYearly,
                 reminderDaysBefore: importantDate.reminderDaysBefore
             )
@@ -160,17 +161,7 @@ class ProfileViewModel {
         return user.firstName
     }
 
-    private func dateFormatter() -> DateFormatter {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        return f
-    }
-
     private func parsedDate(_ string: String) -> Date {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        return f.date(from: string) ?? Date.now
+        APIDate.day(from: string) ?? Date.now
     }
 }

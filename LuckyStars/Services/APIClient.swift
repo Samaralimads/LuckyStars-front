@@ -9,7 +9,6 @@ import Foundation
 
 enum APIError: Error, LocalizedError {
     case invalidURL
-    case noData
     case decodingError(Error)
     case serverError(Int, String)
     case unauthorized
@@ -18,12 +17,19 @@ enum APIError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:              return "Invalid URL."
-        case .noData:                  return "No data received."
         case .decodingError(let e):    return "Failed to decode response: \(e.localizedDescription)"
         case .serverError(_, let msg): return msg
         case .unauthorized:            return "Session expired. Please log in again."
         case .unknown(let e):          return e.localizedDescription
         }
+    }
+}
+
+extension Error {
+    /// True when a request was cancelled (view left the screen, refresh superseded, ...).
+    /// That is not a failure to show to the user.
+    var isCancellation: Bool {
+        self is CancellationError || (self as? URLError)?.code == .cancelled
     }
 }
 
@@ -37,7 +43,14 @@ extension Notification.Name {
 
 final class APIClient {
     static let shared = APIClient()
-    private let baseURL = "http://127.0.0.1:8080"
+    private let baseURL: String = {
+        #if DEBUG
+        return "http://127.0.0.1:8080"
+        #else
+        // TODO: set the production HTTPS URL before release.
+        return "https://REPLACE-WITH-PRODUCTION-URL"
+        #endif
+    }()
 
     private init() {}
 
@@ -97,6 +110,8 @@ final class APIClient {
 
         if requiresAuth {
             guard let token = JWTService.getToken() else {
+                // The token is gone (e.g. removed from the Keychain): same as an expired session.
+                NotificationCenter.default.post(name: .sessionExpired, object: nil)
                 throw APIError.unauthorized
             }
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

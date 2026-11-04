@@ -25,10 +25,7 @@ struct CoupleService {
 
     // MARK: - Create couple (User 1)
     static func createCouple(anniversaryDate: Date) async throws -> Couple {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        let body = CreateCoupleRequest(relationshipStartDate: formatter.string(from: anniversaryDate))
+        let body = CreateCoupleRequest(relationshipStartDate: APIDate.dayString(from: anniversaryDate))
         return try await APIClient.shared.request("/couples/create", method: "POST", body: body)
     }
 
@@ -41,10 +38,5 @@ struct CoupleService {
     // MARK: - Get my invitation code
     static func getMyInvitationCode() async throws -> InvitationResponse {
         return try await APIClient.shared.request("/couples/me/invitation")
-    }
-
-    // MARK: - Get my couple
-    static func getMyCouple() async throws -> Couple {
-        return try await APIClient.shared.request("/couples/me")
     }
 }

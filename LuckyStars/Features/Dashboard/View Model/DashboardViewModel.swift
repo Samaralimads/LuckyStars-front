@@ -31,6 +31,7 @@ class DashboardViewModel {
         do {
             user = try await ProfileService.fetchMe()
         } catch {
+            guard !error.isCancellation else { isLoading = false; return }
             print("Dashboard user error: \(error)")
             errorMessage = "Could not load your profile. Please try again."
         }
@@ -46,6 +47,7 @@ class DashboardViewModel {
                 errorMessage = "Could not load your relationship info. Please try again."
             }
         } catch {
+            guard !error.isCancellation else { isLoading = false; return }
             couple = nil
             print("Dashboard couple error: \(error)")
         }
@@ -58,7 +60,7 @@ class DashboardViewModel {
 
     func loadActivities() async {
         do {
-            let all = try await PlannedActivityService.getCoupleActivities()
+            let all = try await PlannedActivityService.getCoupleActivities().filter { $0.parsedDate != nil }
             let now = Date.now
 
             nextDate = all
@@ -66,14 +68,22 @@ class DashboardViewModel {
                 .sorted { ($0.parsedDate ?? .distantPast) < ($1.parsedDate ?? .distantPast) }
                 .first
 
-            pendingProposals = all
-                .filter { $0.isPending && $0.plannedByUserId != user?.id }
-                .sorted { ($0.parsedDate ?? .distantPast) < ($1.parsedDate ?? .distantPast) }
+            // Without the user we can't tell incoming proposals from our own,
+            // so show neither (instead of offering Accept on our own proposals).
+            if let userId = user?.id {
+                pendingProposals = all
+                    .filter { $0.isPending && $0.plannedByUserId != userId }
+                    .sorted { ($0.parsedDate ?? .distantPast) < ($1.parsedDate ?? .distantPast) }
 
-            sentProposals = all
-                .filter { $0.isPending && $0.plannedByUserId == user?.id }
-                .sorted { ($0.parsedDate ?? .distantPast) < ($1.parsedDate ?? .distantPast) }
+                sentProposals = all
+                    .filter { $0.isPending && $0.plannedByUserId == userId }
+                    .sorted { ($0.parsedDate ?? .distantPast) < ($1.parsedDate ?? .distantPast) }
+            } else {
+                pendingProposals = []
+                sentProposals = []
+            }
         } catch {
+            guard !error.isCancellation else { return }
             print("Dashboard activities error: \(error)")
             errorMessage = "Could not load your dates. Please try again."
         }
@@ -128,7 +138,11 @@ class DashboardViewModel {
 
     // MARK: - Calendar
     func addToCalendar(planned: PlannedActivity) async {
-        guard let date = planned.parsedDate else { return }
+        guard let date = planned.parsedDate else {
+            calendarError = "This date has no valid time, so it can't be added to your calendar."
+            showCalendarError = true
+            return
+        }
         let store = EKEventStore()
 
         do {
@@ -145,11 +159,20 @@ class DashboardViewModel {
                 return
             }
 
+            guard let calendar = store.defaultCalendarForNewEvents else {
+                calendarError = "No calendar is available to add this date to."
+                showCalendarError = true
+                return
+            }
+
+            // The event lasts as long as the activity (minutes); one hour if we can't tell.
+            let minutes = (try? await ActivityService.fetchActivity(id: planned.activityId))?.duration ?? 60
+
             let event = EKEvent(eventStore: store)
             event.title = planned.activityTitle
             event.startDate = date
-            event.endDate = date.addingTimeInterval(3600)
-            event.calendar = store.defaultCalendarForNewEvents
+            event.endDate = date.addingTimeInterval(TimeInterval(minutes * 60))
+            event.calendar = calendar
 
             try store.save(event, span: .thisEvent)
             if let identifier = event.eventIdentifier {

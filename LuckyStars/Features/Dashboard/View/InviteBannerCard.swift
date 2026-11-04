@@ -46,13 +46,17 @@ struct InviteBannerCard: View {
             .padding(.trailing, Outline.shadowOffset)
             .accessibilityLabel("Dismiss")
         }
-        .task {
-            guard code == nil else { return }
-            do {
-                code = try await CoupleService.getMyInvitationCode().code
-            } catch {
-                failed = true
-            }
+        .task { await loadCode() }
+    }
+
+    private func loadCode() async {
+        guard code == nil else { return }
+        failed = false
+        do {
+            code = try await CoupleService.getMyInvitationCode().code
+        } catch {
+            guard !error.isCancellation else { return }
+            failed = true
         }
     }
 
@@ -85,10 +89,19 @@ struct InviteBannerCard: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Invitation code \(code). Tap to copy.")
         } else if failed {
-            Text("Couldn't load your code. Pull down to try again.")
-                .font(.luckySubheadline)
-                .foregroundStyle(Color.destructiveRed)
-                .multilineTextAlignment(.center)
+            VStack(spacing: Spacing.s) {
+                Text("Couldn't load your code.")
+                    .font(.luckySubheadline)
+                    .foregroundStyle(Color.destructiveRed)
+                    .multilineTextAlignment(.center)
+
+                Button("Try again") {
+                    Task { await loadCode() }
+                }
+                .font(.luckySubheadlineStrong)
+                .foregroundStyle(Color.luckyBlue)
+                .underline()
+            }
         } else {
             ProgressView()
                 .padding(.vertical, Spacing.s)
@@ -98,7 +111,7 @@ struct InviteBannerCard: View {
 
 #Preview {
     Background {
-        InviteBannerCard(code: "C89FB7", onDismiss: {})
+        InviteBannerCard(code: "482916", onDismiss: {})
             .padding(20)
     }
 }

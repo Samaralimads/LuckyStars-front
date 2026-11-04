@@ -151,7 +151,7 @@ private extension ActivityView {
 
     var listOfActivities: some View {
         Group {
-            if viewModel.isLoading {
+            if viewModel.isLoading && viewModel.activities.isEmpty {
                 ProgressView()
                     .frame(maxWidth: .infinity)
                     .padding(.top, 40)

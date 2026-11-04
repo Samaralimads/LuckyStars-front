@@ -16,7 +16,6 @@ class AuthViewModel {
 
     var isLoading: Bool = false
     var errorMessage: String? = nil
-    var isNewUser: Bool = false
 
     var hasUppercase: Bool {
         password.range(of: "[A-Z]", options: .regularExpression) != nil
@@ -43,8 +42,16 @@ class AuthViewModel {
         name.count >= 2
     }
 
+    static let minimumAge = 13
+
+    /// The latest birth date that still meets the minimum age.
+    static var latestBirthDate: Date {
+        Calendar.current.date(byAdding: .year, value: -minimumAge, to: .now) ?? .now
+    }
+
     var isBirthDateValid: Bool {
-        birthDate != nil
+        guard let birthDate else { return false }
+        return birthDate <= Self.latestBirthDate
     }
 
     var canSignUp: Bool {
@@ -61,10 +68,7 @@ class AuthViewModel {
         isLoading = true
         errorMessage = nil
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        let birthDateString = formatter.string(from: birthDate)
+        let birthDateString = APIDate.dayString(from: birthDate)
 
         do {
             _ = try await AuthService.register(
@@ -73,7 +77,6 @@ class AuthViewModel {
                 email: email,
                 password: password
             )
-            isNewUser = true
             appState.register()
         } catch let error as APIError {
             print("Sign up error: \(error)")

@@ -16,7 +16,7 @@ struct AddCodePairingView: View {
 
     var body: some View {
         Background {
-            WhiteCard(title: "Have a pairing code?", description: "If your partner invited you to join them, enter their unique 6 character pairing code below.") {
+            WhiteCard(title: "Have a pairing code?", description: "If your partner invited you to join them, enter their unique 6-digit pairing code below.") {
 
                 HStack(spacing: Spacing.s) {
                     ForEach(0..<6) { index in
@@ -60,12 +60,14 @@ struct AddCodePairingView: View {
             isFocused = true
         }
         .onChange(of: code) { _, newValue in
-            if newValue.count > 6 {
-                code = String(newValue.prefix(6))
+            // Codes are 6 digits: drop anything else (e.g. pasted text) and cap the length.
+            let digits = String(newValue.filter(\.isNumber).prefix(6))
+            if digits != newValue {
+                code = digits
             }
         }
         .navigationDestination(isPresented: $navigateToPairingSuccess) {
-            PairingSucessfulView()
+            PairingSuccessfulView()
         }
     }
 

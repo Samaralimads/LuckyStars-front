@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import PhotosUI
 
 struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
@@ -94,13 +93,24 @@ struct ProfileView: View {
             SettingsView()
         }
         .navigationDestination(isPresented: $showInvitePartner) {
-            ShareCodePairingView()
+            ShareCodePairingView(showsNext: false)
         }
         .alert("No Partner Paired", isPresented: $showNoPairAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Invite") { showInvitePartner = true }
         } message: {
             Text("You haven't paired with a partner yet. Would you like to invite them?")
+        }
+        .alert(
+            "Something went wrong",
+            isPresented: Binding(
+                get: { viewModel.errorMessage != nil },
+                set: { if !$0 { viewModel.errorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
         .sheet(isPresented: $showEditAnniversary) {
             EditAnniversarySheet(anniversary: $anniversary)

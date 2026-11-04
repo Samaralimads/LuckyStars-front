@@ -26,7 +26,8 @@ struct SignUpView: View {
 
                     InputField(
                         placeholder: "Date of Birth",
-                        date: $viewModel.birthDate
+                        date: $viewModel.birthDate,
+                        maximumDate: AuthViewModel.latestBirthDate
                     )
 
                     InputField(

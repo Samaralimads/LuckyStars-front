@@ -21,6 +21,10 @@ struct AnniversaryReminderStore {
         }
     }
 
+    static func clear() {
+        UserDefaults.standard.removeObject(forKey: key)
+    }
+
     static func load() -> Int? {
         UserDefaults.standard.object(forKey: key) as? Int
     }

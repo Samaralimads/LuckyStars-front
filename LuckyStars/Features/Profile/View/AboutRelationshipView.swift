@@ -108,7 +108,7 @@ struct NoPartnerView: View{
 
 
             NavigationLink("Invite my partner") {
-                ShareCodePairingView()
+                ShareCodePairingView(showsNext: false)
             }
             .buttonStyle(.luckyPrimary)
             .padding(.top, Spacing.l)

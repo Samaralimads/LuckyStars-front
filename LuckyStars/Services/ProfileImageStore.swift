@@ -25,6 +25,11 @@ struct ProfileImageStore {
         try? data.write(to: fileURL, options: .atomic)
     }
 
+    static func clear() {
+        guard let fileURL else { return }
+        try? FileManager.default.removeItem(at: fileURL)
+    }
+
     static func load() -> UIImage? {
         guard let fileURL, let data = try? Data(contentsOf: fileURL) else { return nil }
         return UIImage(data: data)

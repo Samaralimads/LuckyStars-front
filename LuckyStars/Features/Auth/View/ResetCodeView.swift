@@ -6,20 +6,26 @@
 //
 
 import SwiftUI
-import Combine
 
 struct ResetCodeView: View {
     let email: String
     @State private var code: String = ""
     @State private var verifiedCode: String = ""
-    @State private var timeRemaining: Int = 600
-    @State private var timerExpired: Bool = false
+    @State private var deadline = Date.now.addingTimeInterval(Self.codeLifetime)
+    @State private var now = Date.now
+    @State private var isResending = false
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
     @State private var navigateToReset = false
     @FocusState private var isFocused: Bool
 
-    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private static let codeLifetime: TimeInterval = 600
+
+    private var timeRemaining: Int {
+        max(0, Int(deadline.timeIntervalSince(now).rounded(.up)))
+    }
+
+    private var timerExpired: Bool { timeRemaining == 0 }
 
     var body: some View {
         Background {
@@ -46,12 +52,14 @@ struct ResetCodeView: View {
                 }
 
                 if timerExpired {
-                    Button("Resend code") {
+                    Button(isResending ? "Sending..." : "Resend code") {
                         Task {
+                            isResending = true
+                            defer { isResending = false }
                             do {
                                 try await AuthService.forgotPassword(email: email)
-                                timeRemaining = 600
-                                timerExpired = false
+                                deadline = Date.now.addingTimeInterval(Self.codeLifetime)
+                                now = .now
                                 code = ""
                                 errorMessage = nil
                             } catch {
@@ -60,11 +68,12 @@ struct ResetCodeView: View {
                             }
                         }
                     }
+                    .disabled(isResending)
                     .font(.luckySubheadlineStrong)
                     .foregroundStyle(Color.luckyBlue)
                 } else {
-                    Text("Code valid for \(Text(formattedTime).foregroundColor(Color.luckyBlue))")
-                        .foregroundColor(Color.inkSecondary)
+                    Text("Code valid for \(Text(formattedTime).foregroundStyle(Color.luckyBlue))")
+                        .foregroundStyle(Color.inkSecondary)
                         .font(.luckySubheadline)
                         .contentTransition(.numericText())
                 }
@@ -78,9 +87,18 @@ struct ResetCodeView: View {
         }
         .luckyBackButton()
         .onAppear { isFocused = true }
+        .task {
+            while !Task.isCancelled {
+                now = .now
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
         .onChange(of: code) { _, newValue in
-            if newValue.count > 6 {
-                code = String(newValue.prefix(6))
+            // Codes are 6 digits: drop anything else (e.g. pasted text) and cap the length.
+            let digits = String(newValue.filter(\.isNumber).prefix(6))
+            if digits != newValue {
+                code = digits
+                return
             }
             if newValue.count == 6 {
                 isFocused = false
@@ -97,13 +115,6 @@ struct ResetCodeView: View {
                     }
                     isLoading = false
                 }
-            }
-        }
-        .onReceive(timer) { _ in
-            if timeRemaining > 0 {
-                timeRemaining -= 1
-            } else {
-                timerExpired = true
             }
         }
         .navigationDestination(isPresented: $navigateToReset) {

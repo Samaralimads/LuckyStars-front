@@ -9,11 +9,18 @@ import Foundation
 
 @Observable
 class AppState {
-    var isAuthenticated: Bool = JWTService.getToken() != nil
+    var isAuthenticated: Bool
     var isOnboarding: Bool = UserDefaults.standard.bool(forKey: "isOnboarding")
 
+    @ObservationIgnored private var sessionObserver: NSObjectProtocol?
+
     init() {
-        NotificationCenter.default.addObserver(
+        Self.clearSessionLeftByPreviousInstall()
+        isAuthenticated = JWTService.hasUsableToken()
+
+        if !isAuthenticated { JWTService.delete() }
+
+        sessionObserver = NotificationCenter.default.addObserver(
             forName: .sessionExpired,
             object: nil,
             queue: .main
@@ -23,7 +30,9 @@ class AppState {
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        if let sessionObserver {
+            NotificationCenter.default.removeObserver(sessionObserver)
+        }
     }
 
     func login() {
@@ -44,8 +53,22 @@ class AppState {
 
     func logout() {
         AuthService.logout()
+        ProfileImageStore.clear()
+        AnniversaryReminderStore.clear()
+        CalendarEventStore.clear()
+        UserDefaults.standard.removeObject(forKey: "inviteBannerDismissed")
         isAuthenticated = false
         isOnboarding = false
         UserDefaults.standard.set(false, forKey: "isOnboarding")
+    }
+
+    // MARK: - Fresh install
+    /// Keychain items survive uninstalling the app, UserDefaults don't. On the first launch
+    /// after a (re)install, a token from the previous install is stale, so drop it.
+    private static func clearSessionLeftByPreviousInstall() {
+        let key = "hasLaunchedBefore"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        JWTService.delete()
+        UserDefaults.standard.set(true, forKey: key)
     }
 }
