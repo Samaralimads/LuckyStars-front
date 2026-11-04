@@ -63,8 +63,8 @@ struct ResetCodeView: View {
                     .font(.luckySubheadlineStrong)
                     .foregroundStyle(Color.luckyBlue)
                 } else {
-                    (Text("Code valid for ").foregroundColor(Color.inkSecondary)
-                     + Text(formattedTime).foregroundColor(Color.luckyBlue))
+                    Text("Code valid for \(Text(formattedTime).foregroundColor(Color.luckyBlue))")
+                        .foregroundColor(Color.inkSecondary)
                         .font(.luckySubheadline)
                         .contentTransition(.numericText())
                 }

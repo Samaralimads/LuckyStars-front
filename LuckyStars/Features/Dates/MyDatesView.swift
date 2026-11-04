@@ -162,8 +162,11 @@ struct MyDatesView: View {
     // MARK: - Empty State
     private var emptyState: some View {
         VStack(spacing: 12) {
-            // TODO: Replace the emoji (emptyIcon) with a cute illustration or animation, one per tab.
-            Text(emptyIcon).font(.system(size: 40))
+            Image(emptyImage)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 140)
+                .accessibilityHidden(true)
             Text(emptyTitle)
                 .font(.luckyHeadline)
                 .foregroundStyle(Color.charcoal)
@@ -181,11 +184,11 @@ struct MyDatesView: View {
         .padding(.vertical, 40)
     }
 
-    private var emptyIcon: String {
+    private var emptyImage: String {
         switch selectedTab {
-        case .favorites: "🤍"
-        case .upcoming:  "📅"
-        case .history:   "🌟"
+        case .favorites: "EmptyFavorites"
+        case .upcoming:  "EmptyUpcoming"
+        case .history:   "EmptyHistory"
         }
     }
 

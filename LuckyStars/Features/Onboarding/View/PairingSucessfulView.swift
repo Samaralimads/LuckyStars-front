@@ -27,6 +27,13 @@ struct PairingSucessfulView: View {
                 }
 
                 Spacer()
+
+                Image("PairingSuccess")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 240)
+                    .accessibilityHidden(true)
+
                 Spacer()
                 Spacer()
 

@@ -15,6 +15,7 @@ struct DashboardView: View {
     @State private var proposalToDecline: PlannedActivity? = nil
     @State private var navigateToDetail = false
     @State private var detailActivity: Activity? = nil
+    @State private var showNotifications = false
 
     var body: some View {
         @Bindable var viewModel = viewModel
@@ -93,6 +94,9 @@ struct DashboardView: View {
             .refreshable { await viewModel.load() }
         }
         .task { await viewModel.load() }
+        .navigationDestination(isPresented: $showNotifications) {
+            NotificationsFeedView()
+        }
         .navigationDestination(isPresented: $navigateToDetail) {
             if let activity = detailActivity {
                 ActivityDetailView(activity: activity)
@@ -167,8 +171,8 @@ private extension DashboardView {
 
             Spacer()
 
-            // TODO: wire up to a real notifications feed (partner responses, upcoming activities, special dates) — not NotificationView, that's just preference toggles
-            LuckyCircleButton(systemName: "bell", label: "Notifications") {}
+            // TODO: fill NotificationsFeedView with a real feed (partner responses, upcoming activities, special dates) — not NotificationView, that's just preference toggles
+            LuckyCircleButton(systemName: "bell", label: "Notifications") { showNotifications = true }
                 .padding(.trailing, Outline.shadowMin)
         }
     }
