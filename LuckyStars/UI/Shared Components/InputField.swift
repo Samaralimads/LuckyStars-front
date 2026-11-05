@@ -29,11 +29,11 @@ struct InputField: View {
 
     var isValid: Bool = true
     var passwordRequirements: PasswordRequirements? = nil
-    /// Latest date the date field allows.
-    var maximumDate: Date = .now
 
     @State private var showPassword = false
     @State private var showPasswordRequirements = false
+    @State private var showDatePicker = false
+    @State private var draftDate = Date.now
     @FocusState private var isFocused: Bool
 
     // MARK: - Initializers
@@ -59,22 +59,14 @@ struct InputField: View {
         placeholder: String,
         type: InputFieldType = .date,
         date: Binding<Date?>,
-        maximumDate: Date = .now,
         isValid: Bool = true
     ) {
         self.placeholder = placeholder
         self.type = type
         self._text = .constant("")
         self._date = date
-        self.maximumDate = maximumDate
         self.isValid = isValid
         self.passwordRequirements = nil
-    }
-
-    /// Where the picker opens while nothing is chosen yet: a few decades back, never past the maximum.
-    private var defaultPickerDate: Date {
-        let decadesBack = Calendar.current.date(byAdding: .year, value: -25, to: .now) ?? maximumDate
-        return min(decadesBack, maximumDate)
     }
 
     private var promptText: Text {
@@ -89,31 +81,56 @@ struct InputField: View {
                 switch type {
 
                 case .date:
-                    ZStack {
-                        if date == nil {
-                            HStack {
-                                Text(placeholder).foregroundStyle(Color.placeholderGrey)
-                                Spacer()
+                    // Looks like the other fields (grey placeholder until a date is chosen) and opens a
+                    // date picker sheet when tapped.
+                    Button {
+                        draftDate = date ?? .now
+                        showDatePicker = true
+                    } label: {
+                        HStack {
+                            if let date {
+                                Text(date.formatted(date: .long, time: .omitted))
+                                    .foregroundStyle(Color.charcoal)
+                            } else {
+                                Text(placeholder)
+                                    .foregroundStyle(Color.placeholderGrey)
                             }
-                            .fieldStyle(isFocused: false)
-                            .accessibilityHidden(true)
+                            Spacer()
+                            Image(systemName: "calendar")
+                                .foregroundStyle(Color.luckyBlue)
                         }
-
-                        DatePicker(
-                            selection: Binding(
-                                get: { date ?? defaultPickerDate },
-                                set: { date = $0 }
-                            ),
-                            in: ...maximumDate,
-                            displayedComponents: .date
-                        ) {
-                            // Same grey as the other fields' placeholders.
-                            Text(placeholder).foregroundStyle(Color.placeholderGrey)
+                        .fieldStyle(isFocused: showDatePicker)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(placeholder)
+                    .accessibilityValue(date.map { $0.formatted(date: .long, time: .omitted) } ?? "Not set")
+                    .sheet(isPresented: $showDatePicker) {
+                        NavigationStack {
+                            DatePicker(
+                                placeholder,
+                                selection: $draftDate,
+                                in: ...Date.now,
+                                displayedComponents: .date
+                            )
+                            .datePickerStyle(.graphical)
+                            .tint(Color.luckyBlue)
+                            .padding()
+                            .navigationTitle(placeholder)
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button("Cancel") { showDatePicker = false }
+                                }
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button("Done") {
+                                        date = draftDate
+                                        showDatePicker = false
+                                    }
+                                }
+                            }
                         }
-                        .datePickerStyle(.compact)
-                        .tint(Color.luckyBlue)
-                        .fieldStyle(isFocused: false)
-                        .opacity(date == nil ? 0.015 : 1)
+                        .presentationDetents([.medium, .large])
                     }
 
                 case .password:

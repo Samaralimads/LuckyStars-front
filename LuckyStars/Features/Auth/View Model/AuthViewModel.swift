@@ -42,16 +42,8 @@ class AuthViewModel {
         name.count >= 2
     }
 
-    static let minimumAge = 13
-
-    /// The latest birth date that still meets the minimum age.
-    static var latestBirthDate: Date {
-        Calendar.current.date(byAdding: .year, value: -minimumAge, to: .now) ?? .now
-    }
-
     var isBirthDateValid: Bool {
-        guard let birthDate else { return false }
-        return birthDate <= Self.latestBirthDate
+        birthDate != nil
     }
 
     var canSignUp: Bool {

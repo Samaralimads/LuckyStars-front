@@ -19,9 +19,11 @@ struct LuckyGroup<Content: View>: View {
                 ForEach(subviews.indices, id: \.self) { index in
                     subviews[index]
                     if index < subviews.count - 1 {
+                        // Inset, so the line stays on the white part of the card and never touches the outline.
                         Rectangle()
                             .fill(Color.rowDivider)
                             .frame(height: 1)
+                            .padding(.horizontal, 10)
                     }
                 }
             }

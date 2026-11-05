@@ -41,9 +41,10 @@ struct AddCodePairingView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                Button(isLoading ? "Confirming..." : "Confirm", action: confirmCode)
+                Button("Confirm", action: confirmCode)
                     .buttonStyle(.luckyPrimary)
-                    .disabled(code.count < 6 || isLoading)
+                    .disabled(code.count < 6)
+                    .luckyLoading(isLoading)
 
                 NavigationLink("I'm the first one here") {
                     ShareCodePairingView()

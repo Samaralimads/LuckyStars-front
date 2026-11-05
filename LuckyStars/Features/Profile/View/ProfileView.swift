@@ -97,7 +97,9 @@ struct ProfileView: View {
         }
         .alert("No Partner Paired", isPresented: $showNoPairAlert) {
             Button("Cancel", role: .cancel) { }
+            // The default action is shown in bold, so "Invite" stands out from "Cancel".
             Button("Invite") { showInvitePartner = true }
+                .keyboardShortcut(.defaultAction)
         } message: {
             Text("You haven't paired with a partner yet. Would you like to invite them?")
         }
@@ -113,7 +115,9 @@ struct ProfileView: View {
             Text(viewModel.errorMessage ?? "")
         }
         .sheet(isPresented: $showEditAnniversary) {
-            EditAnniversarySheet(anniversary: $anniversary)
+            EditAnniversarySheet(anniversary: $anniversary) { date in
+                await viewModel.updateAnniversary(date)
+            }
         }
         .sheet(isPresented: $showAddDate) {
             AddImportantDateSheet { label, date, repeatsYearly, reminderDaysBefore in

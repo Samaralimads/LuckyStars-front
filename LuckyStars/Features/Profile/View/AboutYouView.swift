@@ -74,27 +74,20 @@ struct AboutYouView: View {
                         }
                     }
                     .buttonStyle(.luckyPrimary)
-                    .disabled(viewModel.isSaving)
+                    .luckyLoading(viewModel.isSaving)
                     .padding(.trailing, Outline.shadowOffset)
 
                     Button {
                         showDeleteAccountAlert = true
                     } label: {
-                        if viewModel.isDeleting {
-                            HStack {
-                                ProgressView()
-                                Text("Deleting…")
-                            }
-                        } else {
-                            Text("Delete Account")
-                        }
+                        Text("Delete Account")
                     }
                     .buttonStyle(.luckyDestructive)
-                    .disabled(viewModel.isDeleting)
+                    .luckyLoading(viewModel.isDeleting)
                     .padding(.trailing, Outline.shadowOffset)
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 60)
+                .padding(.top, 90)
                 .padding(.bottom, 24)
             }
             .scrollIndicators(.hidden)

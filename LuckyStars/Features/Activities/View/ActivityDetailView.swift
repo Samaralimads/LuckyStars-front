@@ -17,6 +17,12 @@ struct ActivityDetailView: View {
     @State private var isProposing = false
     @State private var proposalSuccess = false
     @State private var errorMessage: String? = nil
+    @State private var showNoPartnerAlert = false
+    @State private var showProposalSent = false
+    @State private var partnerName = "your partner"
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.switchTab) private var switchTab
+    @State private var showInvitePartner = false
 
     var body: some View {
         Background {
@@ -80,15 +86,6 @@ struct ActivityDetailView: View {
                         }
                         .padding(.bottom, Spacing.s)
 
-                        if proposalSuccess {
-                            HStack {
-                                Image(systemName: "checkmark.circle.fill")
-                                Text("Proposal sent to your partner!")
-                                    .font(.luckySubheadlineStrong)
-                            }
-                            .foregroundStyle(Color.luckyBlue)
-                        }
-
                         if let errorMessage {
                             Text(errorMessage)
                                 .font(.luckySubheadline)
@@ -96,9 +93,10 @@ struct ActivityDetailView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
-                        Button(isProposing ? "Sending..." : "Plan this activity", action: proposeActivity)
+                        Button("Propose this activity", action: proposeActivity)
                             .buttonStyle(.luckyPrimary)
-                            .disabled(isProposing || proposalSuccess)
+                            .disabled(proposalSuccess)
+                            .luckyLoading(isProposing)
 
                         Button(action: toggleFavorite) {
                             HStack(spacing: Spacing.s) {
@@ -107,7 +105,7 @@ struct ActivityDetailView: View {
                             }
                         }
                         .buttonStyle(.luckySecondary)
-                        .disabled(isLoadingFavorite)
+                        .luckyLoading(isLoadingFavorite)
                     }
                     .padding(20)
                     .luckyCard()
@@ -118,6 +116,31 @@ struct ActivityDetailView: View {
             .scrollIndicators(.hidden)
         }
         .luckyBackButton()
+        .alert("No Partner Paired", isPresented: $showNoPartnerAlert) {
+            Button("Cancel", role: .cancel) { }
+            // The default action is shown in bold, so "Invite" stands out from "Cancel".
+            Button("Invite") { showInvitePartner = true }
+                .keyboardShortcut(.defaultAction)
+        } message: {
+            Text("You haven't paired with a partner yet. Would you like to invite them?")
+        }
+        .fullScreenCover(isPresented: $showProposalSent) {
+            ProposalSentView(
+                partnerName: partnerName,
+                onBackToActivities: {
+                    showProposalSent = false
+                    dismiss()
+                },
+                onGoToDashboard: {
+                    showProposalSent = false
+                    dismiss()
+                    switchTab(.dashboard)
+                }
+            )
+        }
+        .navigationDestination(isPresented: $showInvitePartner) {
+            ShareCodePairingView(showsNext: false)
+        }
         .task {
             do {
                 let favorites = try await ActivityService.fetchFavorites()
@@ -134,16 +157,25 @@ struct ActivityDetailView: View {
     private func proposeActivity() {
         Task {
             errorMessage = nil
-            let finalDate = combinedDate(date: selectedDate, time: selectedTime)
-            guard finalDate > .now else {
-                errorMessage = "Pick a date and time in the future."
+
+            // A proposal needs a partner to answer it: offer to invite one instead of failing.
+            isProposing = true
+            guard await partnerHasJoined() else {
+                isProposing = false
                 return
             }
 
-            isProposing = true
+            let finalDate = combinedDate(date: selectedDate, time: selectedTime)
+            guard finalDate > .now else {
+                errorMessage = "Pick a date and time in the future."
+                isProposing = false
+                return
+            }
+
             do {
                 _ = try await PlannedActivityService.propose(activityId: activity.id, date: finalDate)
                 proposalSuccess = true
+                showProposalSent = true
             } catch let error as APIError {
                 print("Propose error: \(error)")
                 errorMessage = error.errorDescription ?? "Couldn't send the proposal. Please try again."
@@ -152,6 +184,31 @@ struct ActivityDetailView: View {
                 errorMessage = "Couldn't send the proposal. Please try again."
             }
             isProposing = false
+        }
+    }
+
+    /// False (and the invite prompt shown, or an error set) when the plan can't go ahead yet.
+    private func partnerHasJoined() async -> Bool {
+        do {
+            let couple = try await ProfileService.fetchCouple()
+            guard let partner = couple.partner else {
+                showNoPartnerAlert = true
+                return false
+            }
+            partnerName = partner.firstName
+            return true
+        } catch let error as APIError {
+            if case .serverError(404, _) = error {
+                showNoPartnerAlert = true
+            } else {
+                errorMessage = "Couldn't send the proposal. Please try again."
+            }
+            return false
+        } catch {
+            if !error.isCancellation {
+                errorMessage = "Couldn't send the proposal. Please try again."
+            }
+            return false
         }
     }
 

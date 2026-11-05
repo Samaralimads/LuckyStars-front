@@ -15,6 +15,7 @@ struct ShareCodePairingView: View {
     @State private var isLoading = true
     @State private var loadFailed = false
     @State private var navigateToAnniversary = false
+    @State private var showShare = false
 
     var body: some View {
         Background {
@@ -41,11 +42,9 @@ struct ShareCodePairingView: View {
                     }
                     .padding(.vertical, Spacing.l)
 
-                    ShareLink(
-                        item: code,
-                        subject: Text("Pairing Code"),
-                        message: Text("Join me using this pairing code: \(code)")
-                    ) {
+                    Button {
+                        showShare = true
+                    } label: {
                         HStack(spacing: Spacing.s) {
                             Image(systemName: "square.and.arrow.up")
                             Text("Share Code")
@@ -54,7 +53,7 @@ struct ShareCodePairingView: View {
                     .buttonStyle(.luckyPrimary)
 
                     if showsNext {
-                        Button("Next") {
+                        Button("I'll do it later") {
                             navigateToAnniversary = true
                         }
                         .font(.luckySubheadlineStrong)
@@ -66,6 +65,19 @@ struct ShareCodePairingView: View {
         }
         .luckyBackButton()
         .task { await loadCode() }
+        .sheet(isPresented: $showShare) {
+            ShareSheet(message: shareMessage, subject: "Join me on Lucky Stars") { shared in
+                showShare = false
+                // Once the code has been sent, carry on (during onboarding) without a tap on "Next".
+                guard shared, showsNext else { return }
+                Task {
+                    // Let the share sheet finish closing before pushing the next screen.
+                    try? await Task.sleep(for: .seconds(0.4))
+                    navigateToAnniversary = true
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
         .navigationDestination(isPresented: $navigateToAnniversary) {
             AnniversaryView()
         }
@@ -73,6 +85,17 @@ struct ShareCodePairingView: View {
 }
 
 private extension ShareCodePairingView {
+    /// What your partner receives: where to get the app, then what to do with the code.
+    var shareMessage: String {
+        """
+        Join me on Lucky Stars ✨
+        It's where we'll find and plan our dates together. Get it here:
+        \(AppLinks.appStore.absoluteString)
+
+        Create an account and enter my pairing code: \(code)
+        """
+    }
+
     func loadCode() async {
         isLoading = true
         loadFailed = false

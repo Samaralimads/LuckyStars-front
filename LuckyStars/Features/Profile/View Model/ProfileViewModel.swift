@@ -69,6 +69,21 @@ class ProfileViewModel {
         }
     }
 
+    // MARK: - Update anniversary
+    /// Saves the anniversary for both partners. Returns nil on success, or a message to show.
+    func updateAnniversary(_ date: Date) async -> String? {
+        do {
+            couple = try await CoupleService.updateRelationshipStartDate(date)
+            return nil
+        } catch let error as APIError {
+            print("Update anniversary error: \(error)")
+            return error.errorDescription ?? "Could not save the anniversary. Please try again."
+        } catch {
+            print("Update anniversary error: \(error)")
+            return "Could not save the anniversary. Please try again."
+        }
+    }
+
     // MARK: - Delete account
     func deleteAccount() async -> Bool {
         isDeleting = true

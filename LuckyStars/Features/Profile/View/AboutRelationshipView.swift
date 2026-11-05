@@ -93,7 +93,7 @@ struct PartnerView: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.top, 60)
+            .padding(.top, 90)
             .padding(.bottom, 24)
         }
         .scrollIndicators(.hidden)

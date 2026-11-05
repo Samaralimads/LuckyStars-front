@@ -81,20 +81,33 @@ struct TimeUnitView: View {
 struct EditAnniversarySheet: View {
     @Environment(\.dismiss) var dismiss
     @Binding var anniversary: Date
+    /// Saves the date; returns nil on success, or the message to show when it failed.
+    let onSave: (Date) async -> String?
     @State private var tempDate: Date
-    
-    init(anniversary: Binding<Date>) {
+    @State private var isSaving = false
+    @State private var errorMessage: String? = nil
+
+    init(anniversary: Binding<Date>, onSave: @escaping (Date) async -> String?) {
         self._anniversary = anniversary
+        self.onSave = onSave
         self._tempDate = State(initialValue: anniversary.wrappedValue)
     }
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                DatePicker("Anniversary Date", selection: $tempDate, displayedComponents: .date)
+                DatePicker("Anniversary Date", selection: $tempDate, in: ...Date.now, displayedComponents: .date)
                     .datePickerStyle(.graphical)
                     .padding()
-                
+
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.luckySubheadline)
+                        .foregroundStyle(Color.destructiveRed)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+
                 Spacer()
             }
             .navigationTitle("Edit Anniversary")
@@ -107,10 +120,21 @@ struct EditAnniversarySheet: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        anniversary = tempDate
-                        dismiss()
+                    Button(isSaving ? "Saving..." : "Save") {
+                        Task {
+                            isSaving = true
+                            errorMessage = nil
+                            if let failure = await onSave(tempDate) {
+                                // Keep the sheet open and the old date: nothing was saved.
+                                errorMessage = failure
+                            } else {
+                                anniversary = tempDate
+                                dismiss()
+                            }
+                            isSaving = false
+                        }
                     }
+                    .disabled(isSaving)
                 }
             }
         }

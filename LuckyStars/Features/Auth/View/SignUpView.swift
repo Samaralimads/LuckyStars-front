@@ -26,8 +26,7 @@ struct SignUpView: View {
 
                     InputField(
                         placeholder: "Date of Birth",
-                        date: $viewModel.birthDate,
-                        maximumDate: AuthViewModel.latestBirthDate
+                        date: $viewModel.birthDate
                     )
 
                     InputField(
@@ -62,6 +61,7 @@ struct SignUpView: View {
                 }
                 .buttonStyle(.luckyPrimary)
                 .disabled(!viewModel.canSignUp)
+                .luckyLoading(viewModel.isLoading)
 
                 OrDivider()
 

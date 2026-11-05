@@ -17,8 +17,8 @@
 import Foundation
 
 nonisolated enum APIDate {
-    nonisolated(unsafe) private static let dayFormatter = makeFormatter("yyyy-MM-dd", timeZone: nil)
-    nonisolated(unsafe) private static let dateTimeFormatter = makeFormatter("yyyy-MM-dd HH:mm", timeZone: TimeZone(identifier: "UTC"))
+    private static let dayFormatter = makeFormatter("yyyy-MM-dd", timeZone: nil)
+    private static let dateTimeFormatter = makeFormatter("yyyy-MM-dd HH:mm", timeZone: TimeZone(identifier: "UTC"))
 
     private static func makeFormatter(_ format: String, timeZone: TimeZone?) -> DateFormatter {
         let formatter = DateFormatter()

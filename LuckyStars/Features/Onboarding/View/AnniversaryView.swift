@@ -27,7 +27,7 @@ struct AnniversaryView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                Button(isLoading ? "Saving..." : "Done") {
+                Button("Done") {
                     Task {
                         guard let date = anniversary else { return }
                         isLoading = true
@@ -43,7 +43,8 @@ struct AnniversaryView: View {
                     }
                 }
                 .buttonStyle(.luckyPrimary)
-                .disabled(anniversary == nil || isLoading)
+                .disabled(anniversary == nil)
+                .luckyLoading(isLoading)
             }
         }
         .luckyBackButton()

@@ -65,8 +65,8 @@ struct SettingsView: View {
                         Text("Are you sure you want to log out?")
                     }
                 }
-                                .padding(.horizontal, 20)
-                .padding(.top, 60)
+                .padding(.horizontal, 20)
+                .padding(.top, 90)
                 .padding(.bottom, 24)
             }
             .scrollIndicators(.hidden)

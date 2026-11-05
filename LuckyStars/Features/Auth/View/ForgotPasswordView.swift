@@ -32,7 +32,7 @@ struct ForgotPasswordView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                Button(isLoading ? "Sending..." : "Reset Password") {
+                Button("Reset Password") {
                     Task {
                         isLoading = true
                         errorMessage = nil
@@ -47,7 +47,8 @@ struct ForgotPasswordView: View {
                     }
                 }
                 .buttonStyle(.luckyPrimary)
-                .disabled(!viewModel.isEmailValid || isLoading)
+                .disabled(!viewModel.isEmailValid)
+                .luckyLoading(isLoading)
             }
         }
         .luckyBackButton()

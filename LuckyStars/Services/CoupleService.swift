@@ -29,6 +29,16 @@ struct CoupleService {
         return try await APIClient.shared.request("/couples/create", method: "POST", body: body)
     }
 
+    // MARK: - Update anniversary (either partner)
+    struct UpdateCoupleRequest: Encodable {
+        let relationshipStartDate: String
+    }
+
+    static func updateRelationshipStartDate(_ date: Date) async throws -> Couple {
+        let body = UpdateCoupleRequest(relationshipStartDate: APIDate.dayString(from: date))
+        return try await APIClient.shared.request("/couples/me", method: "PUT", body: body)
+    }
+
     // MARK: - Join couple (User 2)
     static func joinCouple(invitationCode: String) async throws -> Couple {
         let body = JoinCoupleRequest(invitationCode: invitationCode)

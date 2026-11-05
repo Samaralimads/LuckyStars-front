@@ -27,7 +27,13 @@ struct SignInView: View {
                     InputField(
                         placeholder: "Password",
                         type: .password,
-                        text: $viewModel.password
+                        text: $viewModel.password,
+                        isValid: viewModel.isPasswordValid,
+                        passwordRequirements: PasswordRequirements(
+                            hasUppercase: viewModel.hasUppercase,
+                            hasNumber: viewModel.hasNumber,
+                            hasMinLength: viewModel.hasMinLength
+                        )
                     )
 
                     HStack {
@@ -54,6 +60,7 @@ struct SignInView: View {
                 }
                 .buttonStyle(.luckyPrimary)
                 .disabled(!viewModel.canSignIn)
+                .luckyLoading(viewModel.isLoading)
 
                 OrDivider()
 
