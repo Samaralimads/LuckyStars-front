@@ -6,12 +6,15 @@
 //
 
 import Foundation
+import UIKit
 import SwiftUI
 
 @Observable
 class ProfileViewModel {
     var user: User? = nil
     var couple: Couple? = nil
+    /// The partner's photo. Starts with the copy saved on this phone, so it shows at once.
+    var partnerImage: UIImage? = PartnerImageStore.load()
     var importantDates: [ImportantDate] = []
     var isLoading: Bool = false
     var errorMessage: String? = nil
@@ -49,6 +52,64 @@ class ProfileViewModel {
         }
 
         isLoading = false
+    }
+
+    // MARK: - Unpair
+    /// Ends the couple for both people. Returns nil on success, or the message to show.
+    func unpair() async -> String? {
+        do {
+            try await CoupleService.unpair()
+            couple = nil
+            partnerImage = nil
+            PartnerImageStore.clear()
+            return nil
+        } catch let error as APIError {
+            print("Unpair error: \(error)")
+            return error.errorDescription ?? "Couldn't unpair. Please try again."
+        } catch {
+            print("Unpair error: \(error)")
+            return "Couldn't unpair. Please try again."
+        }
+    }
+
+    // MARK: - Photos
+    /// Refreshes the partner's photo from the server (or clears it when they have none / there is no partner).
+    func loadPhotos() async {
+        guard couple?.partner?.hasProfilePicture == true else {
+            partnerImage = nil
+            PartnerImageStore.clear()
+            return
+        }
+        do {
+            if let image = try await ProfileService.fetchPartnerPicture() {
+                partnerImage = image
+                PartnerImageStore.save(image)
+            }
+        } catch {
+            if !error.isCancellation { print("Partner photo error: \(error)") }
+        }
+    }
+
+    /// The user's own photo from the server, for a phone that doesn't have it yet (new phone, reinstall).
+    func downloadMyPicture() async -> UIImage? {
+        do {
+            guard let image = try await ProfileService.fetchMyPicture() else { return nil }
+            ProfileImageStore.save(image)
+            return image
+        } catch {
+            if !error.isCancellation { print("My photo error: \(error)") }
+            return nil
+        }
+    }
+
+    func uploadMyPicture(_ image: UIImage) async {
+        do {
+            try await ProfileService.uploadMyPicture(image)
+        } catch {
+            guard !error.isCancellation else { return }
+            print("Upload photo error: \(error)")
+            errorMessage = "Couldn't upload your photo. Please try again."
+        }
     }
 
     // MARK: - Save profile

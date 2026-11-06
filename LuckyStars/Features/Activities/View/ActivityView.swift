@@ -117,7 +117,8 @@ private extension ActivityView {
                         isSelected: viewModel.selectedCategoryName == category.name,
                         imageName: category.imageName
                     ) {
-                        viewModel.selectedCategoryName = category.name
+                        // Tapping the selected category again unselects it: back to All.
+                        viewModel.selectedCategoryName = viewModel.selectedCategoryName == category.name ? nil : category.name
                         Task { await viewModel.applyFilters() }
                     }
                 }

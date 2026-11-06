@@ -64,9 +64,7 @@ struct SignInView: View {
 
                 OrDivider()
 
-                AppleSignInButton(title: "Sign in with Apple") {
-                    // TODO: Sign in with Apple
-                }
+                AppleAuthSection(kind: .signIn)
 
                 HStack(spacing: Spacing.xs) {
                     Text("Already have an account?")

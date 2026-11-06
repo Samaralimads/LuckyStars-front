@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @Environment(AppState.self) private var appState
     @State private var viewModel = ProfileViewModel()
     @State private var showSettings = false
     @State private var showNoPairAlert = false
@@ -44,6 +45,7 @@ struct ProfileView: View {
                             partner1Initial: viewModel.partner1Initial,
                             partner2Initial: viewModel.partner2Initial,
                             profileImage: selectedImage,
+                            partnerImage: viewModel.partnerImage,
                             onCameraClick: {
                                 showImagePicker = true
                             },
@@ -81,10 +83,20 @@ struct ProfileView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .task {
+        .task(id: appState.coupleVersion) {
             await viewModel.load()
             anniversary = viewModel.anniversaryDate
             selectedImage = ProfileImageStore.load()
+
+            // New phone or reinstall: take the user's photo from the server.
+            if selectedImage == nil, let remote = await viewModel.downloadMyPicture() {
+                selectedImage = remote
+            }
+            // A photo chosen before photos were shared: send it once, so the partner can see it.
+            if let local = selectedImage, viewModel.user?.profilePicture == nil {
+                await viewModel.uploadMyPicture(local)
+            }
+            await viewModel.loadPhotos()
         }
         .onChange(of: anniversaryReminder) { _, newValue in
             AnniversaryReminderStore.save(newValue)
@@ -132,11 +144,14 @@ struct ProfileView: View {
             }
         }
         .sheet(isPresented: $showImagePicker) {
-            ImagePicker(selectedImage: $selectedImage)
+            ImagePicker(selectedImage: $selectedImage) { image in
+                Task { await viewModel.uploadMyPicture(image) }
+            }
         }
     }
 }
 
 #Preview {
     ProfileView()
+        .environment(AppState())
 }

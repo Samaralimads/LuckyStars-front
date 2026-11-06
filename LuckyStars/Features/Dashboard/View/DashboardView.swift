@@ -10,6 +10,7 @@ import SwiftUI
 struct DashboardView: View {
     @State private var viewModel = DashboardViewModel()
     @Environment(\.switchTab) private var switchTab
+    @Environment(AppState.self) private var appState
     @AppStorage("inviteBannerDismissed") private var showInviteBannerDismissed = false
     @State private var proposalToReschedule: PlannedActivity? = nil
     @State private var proposalToDecline: PlannedActivity? = nil
@@ -93,7 +94,8 @@ struct DashboardView: View {
             }
             .refreshable { await viewModel.load() }
         }
-        .task { await viewModel.load() }
+        // Runs on appear, and again whenever the user pairs with a partner.
+        .task(id: appState.coupleVersion) { await viewModel.load() }
         .navigationDestination(isPresented: $showNotifications) {
             NotificationsFeedView()
         }

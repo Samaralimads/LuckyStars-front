@@ -9,6 +9,8 @@ import SwiftUI
 
 struct PairingSuccessfulView: View {
     @Environment(AppState.self) private var appState
+    /// Used when pairing happens after onboarding (from Profile). nil during onboarding.
+    var onContinue: (() -> Void)? = nil
 
     var body: some View {
         Background {
@@ -43,7 +45,11 @@ struct PairingSuccessfulView: View {
                     .multilineTextAlignment(.center)
 
                 Button("Go to dashboard") {
-                    appState.completeOnboarding()
+                    if let onContinue {
+                        onContinue()
+                    } else {
+                        appState.completeOnboarding()
+                    }
                 }
                 .buttonStyle(.luckyPrimary)
                 .padding(.top, Spacing.xl)

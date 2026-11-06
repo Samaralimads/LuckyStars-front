@@ -10,6 +10,8 @@ struct ProfileAvatarsCard: View {
     let partner1Initial: String
     let partner2Initial: String?
     let profileImage: UIImage?
+    /// The partner's photo, when they have one.
+    let partnerImage: UIImage?
     let onCameraClick: () -> Void
     let onAddPartnerClick: () -> Void
     
@@ -46,7 +48,13 @@ struct ProfileAvatarsCard: View {
                     .frame(width: 84, height: 84)
                     .overlay(
                         Group {
-                            if let initial = partner2Initial {
+                            if let partnerImage {
+                                Image(uiImage: partnerImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 84, height: 84)
+                                    .clipShape(Circle())
+                            } else if let initial = partner2Initial {
                                 Text(initial)
                                     .font(.luckyTitle)
                                     .foregroundStyle(Color.charcoal)
@@ -87,6 +95,8 @@ struct ProfileAvatarsCard: View {
 // MARK: - Image Picker
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
+    /// Called with the picture the user chose (not when a saved one is loaded).
+    var onPick: ((UIImage) -> Void)? = nil
     @Environment(\.dismiss) var dismiss
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
@@ -113,6 +123,7 @@ struct ImagePicker: UIViewControllerRepresentable {
             if let image = info[.originalImage] as? UIImage {
                 parent.selectedImage = image
                 ProfileImageStore.save(image)
+                parent.onPick?(image)
             }
             parent.dismiss()
         }

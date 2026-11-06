@@ -12,6 +12,8 @@
 	</array>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Lucky Stars uses your calendar to add the dates you plan together so you don't miss them.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Lucky Stars connects to the test server on your computer while the app is being developed.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Lucky Stars uses your photo library so you can set a profile picture.</string>
 </dict>

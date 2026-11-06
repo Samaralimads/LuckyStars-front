@@ -45,7 +45,14 @@ final class APIClient {
     static let shared = APIClient()
     private let baseURL: String = {
         #if DEBUG
+        #if targetEnvironment(simulator)
+        // The simulator runs on the Mac itself.
         return "http://127.0.0.1:8080"
+        #else
+        // A real iPhone reaches the Mac by its network name (same Wi-Fi). The server must run with
+        // `serve --hostname 0.0.0.0` so it accepts connections from the network.
+        return "http://Samaras-Laptop.local:8080"
+        #endif
         #else
         // TODO: set the production HTTPS URL before release.
         return "https://REPLACE-WITH-PRODUCTION-URL"
@@ -71,6 +78,25 @@ final class APIClient {
             return try decoder.decode(T.self, from: data)
         } catch {
             throw APIError.decodingError(error)
+        }
+    }
+
+    // MARK: - Raw upload (photos)
+    func uploadData(_ path: String, method: String = "PUT", data: Data, contentType: String) async throws {
+        var request = try makeRequest(path, method: method, queryItems: [], body: nil, requiresAuth: true)
+        request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        request.httpBody = data
+        _ = try await perform(request, requiresAuth: true)
+    }
+
+    // MARK: - Raw download (photos). nil when the server has none (404).
+    func downloadData(_ path: String) async throws -> Data? {
+        let request = try makeRequest(path, method: "GET", queryItems: [], body: nil, requiresAuth: true)
+        do {
+            return try await perform(request, requiresAuth: true)
+        } catch let error as APIError {
+            if case .serverError(404, _) = error { return nil }
+            throw error
         }
     }
 

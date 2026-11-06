@@ -9,6 +9,8 @@ import SwiftUI
 
 struct AboutRelationshipView: View {
     @State private var viewModel = ProfileViewModel()
+    @State private var showEnterCode = false
+    @Environment(\.switchTab) private var switchTab
 
     var body: some View {
         Background{
@@ -19,12 +21,22 @@ struct AboutRelationshipView: View {
                 } else if viewModel.isPaired {
                     PartnerView(viewModel: viewModel)
                 } else {
-                    NoPartnerView()
+                    NoPartnerView(onEnterCode: { showEnterCode = true })
                 }
             }
         }
         .luckyBackButton(title: "Your Relationship")
         .task { await viewModel.load() }
+        .fullScreenCover(isPresented: $showEnterCode, onDismiss: {
+            Task { await viewModel.load() }
+        }) {
+            NavigationStack {
+                AddCodePairingView(isOnboarding: false) {
+                    showEnterCode = false
+                    switchTab(.dashboard)
+                }
+            }
+        }
     }
 }
 
@@ -32,7 +44,9 @@ struct AboutRelationshipView: View {
 struct PartnerView: View {
     let viewModel: ProfileViewModel
     @State private var showUnpairAlert = false
-    @State private var showUnpairUnavailableAlert = false
+    @State private var isUnpairing = false
+    @State private var unpairError: String? = nil
+    @Environment(AppState.self) private var appState
 
     var body: some View {
 
@@ -76,20 +90,32 @@ struct PartnerView: View {
                     Text("Unpair partner")
                 }
                 .buttonStyle(.luckyDestructive)
+                .luckyLoading(isUnpairing)
                 .padding(.trailing, Outline.shadowOffset)
                 .alert("Unpair Partner", isPresented: $showUnpairAlert) {
                     Button("Cancel", role: .cancel) { }
                     Button("Unpair", role: .destructive) {
-                        // Unpairing isn't implemented on the backend yet.
-                        showUnpairUnavailableAlert = true
+                        Task {
+                            isUnpairing = true
+                            unpairError = await viewModel.unpair()
+                            isUnpairing = false
+                            // Dashboard and Profile reload, so they stop showing the partner.
+                            if unpairError == nil { appState.coupleChanged() }
+                        }
                     }
                 } message: {
-                    Text("Are you sure you want to unpair from \(viewModel.couple?.partner?.firstName ?? "your partner")? You'll need to pair again to reconnect.")
+                    Text("Are you sure you want to unpair from \(viewModel.couple?.partner?.firstName ?? "your partner")? Your shared dates will be hidden for both of you, and you'll need to pair again to reconnect.")
                 }
-                .alert("Not Available Yet", isPresented: $showUnpairUnavailableAlert) {
+                .alert(
+                    "Couldn't unpair",
+                    isPresented: Binding(
+                        get: { unpairError != nil },
+                        set: { if !$0 { unpairError = nil } }
+                    )
+                ) {
                     Button("OK", role: .cancel) { }
                 } message: {
-                    Text("Unpairing isn't supported yet — it's on the list.")
+                    Text(unpairError ?? "")
                 }
             }
             .padding(.horizontal, 20)
@@ -101,6 +127,8 @@ struct PartnerView: View {
 }
 
 struct NoPartnerView: View{
+    /// Opens the screen to type the pairing code a partner shared.
+    var onEnterCode: () -> Void = {}
 
     var body: some View {
 
@@ -113,6 +141,9 @@ struct NoPartnerView: View{
             .buttonStyle(.luckyPrimary)
             .padding(.top, Spacing.l)
 
+            Button("I have a pairing code", action: onEnterCode)
+                .buttonStyle(.luckySecondary)
+
         }
 
     }
@@ -120,4 +151,5 @@ struct NoPartnerView: View{
 
 #Preview {
     AboutRelationshipView()
+        .environment(AppState())
 }

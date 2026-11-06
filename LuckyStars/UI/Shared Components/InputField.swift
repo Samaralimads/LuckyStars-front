@@ -113,9 +113,10 @@ struct InputField: View {
                                 in: ...Date.now,
                                 displayedComponents: .date
                             )
-                            .datePickerStyle(.graphical)
+                            .datePickerStyle(.wheel)
+                            .labelsHidden()
                             .tint(Color.luckyBlue)
-                            .padding()
+                            .padding(.horizontal)
                             .navigationTitle(placeholder)
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
@@ -130,7 +131,7 @@ struct InputField: View {
                                 }
                             }
                         }
-                        .presentationDetents([.medium, .large])
+                        .presentationDetents([.height(330)])
                     }
 
                 case .password:

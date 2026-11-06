@@ -59,6 +59,32 @@ struct AuthService {
         return response
     }
 
+    // MARK: - Sign in with Apple
+    struct AppleSignInRequest: Encodable {
+        let identityToken: String
+        let nonce: String
+        let authorizationCode: String?
+        let firstName: String?
+        let birthDate: String?
+    }
+
+    struct AppleAuthResponse: Decodable {
+        /// nil while `needsProfile` is true.
+        let token: String?
+        let user: User?
+        /// A first-time Apple user: ask for the name (if Apple didn't give it) and the birth date, then send again.
+        let needsProfile: Bool
+        let isNewUser: Bool
+    }
+
+    static func signInWithApple(_ body: AppleSignInRequest) async throws -> AppleAuthResponse {
+        let response: AppleAuthResponse = try await APIClient.shared.request("/auth/apple", method: "POST", body: body, requiresAuth: false)
+        if let token = response.token {
+            guard JWTService.save(token: token) else { throw SessionError.couldNotSaveToken }
+        }
+        return response
+    }
+
     // MARK: - Logout
     static func logout() {
         JWTService.delete()

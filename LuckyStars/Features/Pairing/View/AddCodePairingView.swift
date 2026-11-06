@@ -8,6 +8,12 @@
 import SwiftUI
 
 struct AddCodePairingView: View {
+    /// true: right after sign-up. false: opened later from Profile, in its own sheet.
+    var isOnboarding = true
+    /// Closes the sheet when it was opened from Profile.
+    var onClose: (() -> Void)? = nil
+
+    @Environment(AppState.self) private var appState
     @State private var code: String = ""
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
@@ -46,12 +52,19 @@ struct AddCodePairingView: View {
                     .disabled(code.count < 6)
                     .luckyLoading(isLoading)
 
-                NavigationLink("I'm the first one here") {
-                    ShareCodePairingView()
+                if isOnboarding {
+                    NavigationLink("I'm the first one here") {
+                        ShareCodePairingView()
+                    }
+                    .font(.luckySubheadlineStrong)
+                    .foregroundStyle(Color.luckyBlue)
+                    .underline()
+                } else {
+                    Button("Cancel") { onClose?() }
+                        .font(.luckySubheadlineStrong)
+                        .foregroundStyle(Color.luckyBlue)
+                        .underline()
                 }
-                .font(.luckySubheadlineStrong)
-                .foregroundStyle(Color.luckyBlue)
-                .underline()
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -68,7 +81,7 @@ struct AddCodePairingView: View {
             }
         }
         .navigationDestination(isPresented: $navigateToPairingSuccess) {
-            PairingSuccessfulView()
+            PairingSuccessfulView(onContinue: isOnboarding ? nil : onClose)
         }
     }
 
@@ -79,6 +92,7 @@ struct AddCodePairingView: View {
             errorMessage = nil
             do {
                 _ = try await CoupleService.joinCouple(invitationCode: code)
+                appState.coupleChanged()
                 navigateToPairingSuccess = true
             } catch let error as APIError {
                 print("Join couple error: \(error)")

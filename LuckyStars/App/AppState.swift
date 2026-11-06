@@ -12,6 +12,9 @@ class AppState {
     var isAuthenticated: Bool
     var isOnboarding: Bool = UserDefaults.standard.bool(forKey: "isOnboarding")
 
+    /// Goes up every time the user pairs or unpairs, so screens showing couple data can reload.
+    var coupleVersion = 0
+
     @ObservationIgnored private var sessionObserver: NSObjectProtocol?
 
     init() {
@@ -46,6 +49,10 @@ class AppState {
         UserDefaults.standard.set(true, forKey: "isOnboarding")
     }
 
+    func coupleChanged() {
+        coupleVersion += 1
+    }
+
     func completeOnboarding() {
         isOnboarding = false
         UserDefaults.standard.set(false, forKey: "isOnboarding")
@@ -54,6 +61,7 @@ class AppState {
     func logout() {
         AuthService.logout()
         ProfileImageStore.clear()
+        PartnerImageStore.clear()
         AnniversaryReminderStore.clear()
         CalendarEventStore.clear()
         UserDefaults.standard.removeObject(forKey: "inviteBannerDismissed")

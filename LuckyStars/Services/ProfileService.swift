@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 struct ProfileService {
 
@@ -71,5 +72,37 @@ struct ProfileService {
     // MARK: - Delete important date
     static func deleteImportantDate(id: UUID) async throws {
         try await APIClient.shared.requestEmpty("/important-dates/\(id.uuidString)", method: "DELETE")
+    }
+
+    // MARK: - Photos
+    /// Sends the user's photo (shrunk first: a profile circle never needs the full-size picture).
+    static func uploadMyPicture(_ image: UIImage) async throws {
+        guard let data = image.resizedToFit(maxDimension: 800).jpegData(compressionQuality: 0.8) else { return }
+        try await APIClient.shared.uploadData("/users/me/picture", data: data, contentType: "image/jpeg")
+    }
+
+    static func fetchMyPicture() async throws -> UIImage? {
+        guard let data = try await APIClient.shared.downloadData("/users/me/picture") else { return nil }
+        return UIImage(data: data)
+    }
+
+    static func fetchPartnerPicture() async throws -> UIImage? {
+        guard let data = try await APIClient.shared.downloadData("/couples/me/partner/picture") else { return nil }
+        return UIImage(data: data)
+    }
+}
+
+extension UIImage {
+    /// The same picture, no bigger than `maxDimension` on its longest side.
+    func resizedToFit(maxDimension: CGFloat) -> UIImage {
+        let longest = max(size.width, size.height)
+        guard longest > maxDimension else { return self }
+        let scale = maxDimension / longest
+        let newSize = CGSize(width: size.width * scale, height: size.height * scale)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: newSize, format: format).image { _ in
+            draw(in: CGRect(origin: .zero, size: newSize))
+        }
     }
 }

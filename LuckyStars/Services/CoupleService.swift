@@ -49,4 +49,9 @@ struct CoupleService {
     static func getMyInvitationCode() async throws -> InvitationResponse {
         return try await APIClient.shared.request("/couples/me/invitation")
     }
+
+    // MARK: - Unpair
+    static func unpair() async throws {
+        try await APIClient.shared.requestEmpty("/couples/me", method: "DELETE")
+    }
 }

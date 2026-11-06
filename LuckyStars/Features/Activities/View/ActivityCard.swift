@@ -13,47 +13,59 @@ struct ActivityCard: View {
     private static let imageSize: CGFloat = 80
 
     var body: some View {
-        textBlock(reservesSpace: true)
-            .hidden()
-            .accessibilityHidden(true)
-            .overlay(alignment: .leading) {
-                textBlock(reservesSpace: false)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            // Centered on the whole card, not just the text block.
-            .overlay(alignment: .trailing) {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            HStack(alignment: .center, spacing: Spacing.m) {
+                textBlock
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 Image(activity.category.imageName)
                     .resizable()
                     .scaledToFit()
                     .frame(width: Self.imageSize, height: Self.imageSize)
-                    .padding(.trailing, 20)
                     .accessibilityHidden(true)
             }
-            .luckyCard()
-            .padding(.trailing, Outline.shadowOffset)
+
+            // On its own row, so the illustration never touches the tags.
+            InfoTags(activity: activity)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .luckyCard()
+        .padding(.trailing, Outline.shadowOffset)
+    }
+}
+
+private extension ActivityCard {
+    /// Title and description. The space is always that of a two-line title plus a two-line description,
+    /// so every card has the same height. Inside it, a one-line title leaves room for a longer
+    /// (three-line) description; a two-line title keeps the two-line one.
+    var textBlock: some View {
+        column(descriptionLines: 2, reservesSpace: true)
+            .hidden()
+            .accessibilityHidden(true)
+            .overlay(alignment: .topLeading) {
+                // Tries the taller version first: it only fits when the title takes a single line.
+                ViewThatFits(in: .vertical) {
+                    column(descriptionLines: 3, reservesSpace: false)
+                    column(descriptionLines: 2, reservesSpace: false)
+                }
+            }
     }
 
-    private func textBlock(reservesSpace: Bool) -> some View {
+    func column(descriptionLines: Int, reservesSpace: Bool) -> some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
-            VStack(alignment: .leading, spacing: Spacing.s) {
-                Text(activity.title)
-                    .font(.luckyHeadline)
-                    .foregroundStyle(Color.charcoal)
-                    .lineLimit(2, reservesSpace: reservesSpace)
-                    .multilineTextAlignment(.leading)
+            Text(activity.title)
+                .font(.luckyHeadline)
+                .foregroundStyle(Color.charcoal)
+                .lineLimit(2, reservesSpace: reservesSpace)
+                .multilineTextAlignment(.leading)
 
-                Text(activity.description)
-                    .font(.luckySubheadline)
-                    .foregroundStyle(Color.inkSecondary)
-                    .lineLimit(2, reservesSpace: reservesSpace)
-                    .multilineTextAlignment(.leading)
-            }
-            // Keeps the text clear of the illustration, which is overlaid on the card.
-            .padding(.trailing, Self.imageSize + Spacing.m)
-
-            InfoTags(activity: activity)
+            Text(activity.description)
+                .font(.luckySubheadline)
+                .foregroundStyle(Color.inkSecondary)
+                .lineLimit(descriptionLines, reservesSpace: reservesSpace)
+                .multilineTextAlignment(.leading)
         }
     }
 }
